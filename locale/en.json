@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Second Angle",
+    "description": "Checks each finished answer against the tool output its turn read: steers a correction on a contradiction, flags claims the reads do not back."
+  }
+}

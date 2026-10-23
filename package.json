@@ -1,0 +1,85 @@
+{
+  "name": "dsh-second-angle",
+  "version": "0.1.0",
+  "description": "A second angle on every finished DeepSeek Harness turn: checks the answer against the tool output the turn actually read, steers a correction on a contradiction, and flags claims the reads do not back.",
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dsh",
+    "agent",
+    "fact-check",
+    "grounding",
+    "hallucination"
+  ],
+  "license": "MIT",
+  "author": "TwoHalves",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rootsbymenda/dsh-second-angle.git"
+  },
+  "homepage": "https://github.com/rootsbymenda/dsh-second-angle#readme",
+  "bugs": "https://github.com/rootsbymenda/dsh-second-angle/issues",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": [
+    "lib/**/*.js",
+    "lib/types/**/*.d.ts",
+    "locale/*.json",
+    "cordis.patch.yml",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "dsh": ">=0.2.1-rc.2 <0.3.0",
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepare": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "lint": "oxlint --deny-warnings src tests eval",
+    "eval": "node eval/run-eval.ts"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.5",
+    "@deepseek-ai/dsh-agent": ">=0.2.1-rc.2 <0.3.0",
+    "@deepseek-ai/dsh-llm": ">=0.2.1-rc.2 <0.3.0",
+    "@deepseek-ai/dsh-session": ">=0.2.1-rc.2 <0.3.0",
+    "@deepseek-ai/schemastery": "^3.18.5"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "~4.0.5",
+    "@deepseek-ai/cordis-plugin-loader": "~1.0.6",
+    "@deepseek-ai/dsh-agent": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-agent-loop": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-agent-loop-testkit": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-fs-local": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-session": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-session-projection": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-tools": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-working-directory": "0.2.1-rc.2",
+    "@deepseek-ai/schemastery": "~3.18.5",
+    "@types/node": "^22.20.1",
+    "oxlint": "1.81.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
+  },
+  "packageManager": "pnpm@11.28.5"
+}

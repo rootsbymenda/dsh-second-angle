@@ -1,0 +1,5 @@
+# dsh-second-angle bundle layer: mounts the plugin with its defaults.
+# Override any field from your profile's cordis.patch.yml by restating this row's whole config.
+- insert:
+    - id: second-angle
+      name: dsh-second-angle
