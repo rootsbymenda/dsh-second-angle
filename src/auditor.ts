@@ -40,13 +40,17 @@ export interface AuditorOutput {
 
 /** A call that produced no usable stream outcome. */
 export class AuditorCallError extends Error {
+  /** `aborted` (cancelled or timed out), `error` (the provider or adapter failed), or `no-output`. */
+  readonly code: 'aborted' | 'error' | 'no-output'
+
   /**
    * @param message - what went wrong, for the log and the verdict record.
-   * @param code - `aborted` (cancelled or timed out), `error` (the provider or adapter failed), or `no-output`.
+   * @param code - the failure class.
    */
-  constructor(message: string, readonly code: 'aborted' | 'error' | 'no-output') {
+  constructor(message: string, code: 'aborted' | 'error' | 'no-output') {
     super(message)
     this.name = 'AuditorCallError'
+    this.code = code
   }
 }
 

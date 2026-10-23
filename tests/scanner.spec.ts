@@ -24,23 +24,29 @@ describe('scanAnswer: absolute words', () => {
 describe('scanAnswer: numbers with units', () => {
   it('finds numbers with units and reports the ones the evidence does not contain', () => {
     const result = scanAnswer('The store holds 1,326 files in 185 GiB and took 16 s.', 'total 1326\n189518 MiB', options)
-    expect(result.numbersWithUnit).toEqual(['1,326 files', '185 GiB', '16 s'])
+    expect(result.numbers).toEqual(['1,326 files', '185 GiB', '16 s'])
     expect(result.numbersNotInEvidence.map(finding => finding.match)).toEqual(['185 GiB', '16 s'])
   })
 
   it('accepts attached k/M/x suffixes and percent signs', () => {
     const result = scanAnswer('About 10k tokens, 1M context, 3x faster, 42% done.', '', options)
-    expect(result.numbersWithUnit).toEqual(['10k', '1M', '3x', '42%'])
+    expect(result.numbers).toEqual(['10k', '1M', '3x', '42%'])
   })
 
-  it('does not treat a bare number or a version as a number with a unit', () => {
+  it('does not treat a bare number, a two-part section number, or an issue number as a numeric claim', () => {
     const result = scanAnswer('Python 3 is installed; see section 2.1 and issue #60.', '', options)
-    expect(result.numbersWithUnit).toEqual([])
+    expect(result.numbers).toEqual([])
+  })
+
+  it('treats version strings and ISO dates as numeric claims, compared as written', () => {
+    const result = scanAnswer('Version 2.3.0 shipped on 2026-09-30; v0.2.1-rc.2 is next.', 'version: 2.4.1\nreleased: 2026-09-30\n0.2.1-rc.2', options)
+    expect(result.numbers).toEqual(['2.3.0', '2026-09-30', 'v0.2.1-rc.2'])
+    expect(result.numbersNotInEvidence.map(finding => finding.match)).toEqual(['2.3.0'])
   })
 
   it('accepts extra unit spellings from the configuration', () => {
     const result = scanAnswer('It used 12 shards.', '', { absoluteWords: [], extraUnits: ['shards'] })
-    expect(result.numbersWithUnit).toEqual(['12 shards'])
+    expect(result.numbers).toEqual(['12 shards'])
   })
 })
 

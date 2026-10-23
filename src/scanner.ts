@@ -1,15 +1,15 @@
 /**
  * The free scanner: a no-model pass over a finished answer. It finds absolute
- * words ("every", "never", "nobody", ...) and numbers that carry a unit, and
- * reports which of those numbers do not appear anywhere in the turn's tool
- * output. It runs in well under a millisecond and decides whether the model
- * auditor is worth calling at all.
+ * words ("every", "never", "nobody", ...) and numeric claims (numbers that
+ * carry a unit, version strings, and dates), and reports which numeric claims
+ * do not appear anywhere in the turn's tool output. It runs in well under a
+ * millisecond and decides whether the model auditor is worth calling at all.
  * @module dsh-second-angle/scanner
  */
 
 /** One scanner hit: what matched and the sentence it sits in. */
 export interface ScanFinding {
-  /** `absolute-word`: a word asserting a whole range; `number-not-in-evidence`: a number with a unit absent from the tool output. */
+  /** `absolute-word`: a word asserting a whole range; `number-not-in-evidence`: a numeric claim absent from the tool output. */
   readonly kind: 'absolute-word' | 'number-not-in-evidence'
   /** The matched text, as written in the answer. */
   readonly match: string
@@ -21,10 +21,10 @@ export interface ScanFinding {
 export interface ScanResult {
   /** Absolute words found in the answer, in order of appearance. */
   readonly absolutes: readonly ScanFinding[]
-  /** Numbers with a unit whose value does not occur in the evidence text. */
+  /** Numeric claims whose value does not occur in the evidence text. */
   readonly numbersNotInEvidence: readonly ScanFinding[]
-  /** Every number with a unit found in the answer, whether or not the evidence has it. */
-  readonly numbersWithUnit: readonly string[]
+  /** Every numeric claim in the answer (numbers with a unit, version strings, dates), whether or not the evidence has it. */
+  readonly numbers: readonly string[]
 }
 
 /** Scanner options; both lists come from the plugin configuration. */
@@ -104,6 +104,9 @@ function numberWithUnitPattern(extraUnits: readonly string[]): RegExp {
   return new RegExp(String.raw`(?<![\w.,])${number}(?:\s?(${units.join('|')})|([kKM]))(?![\p{L}\p{N}_])`, 'gu')
 }
 
+/** Version strings (`2.4.1`, `v0.2.1-rc.2`) and ISO dates (`2026-09-30`), compared as written. */
+const LITERAL_PATTERN = /(?<![\w.])(?:v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?|\d{4}-\d{2}-\d{2})(?![\w])/g
+
 /** Build the absolute-word pattern for one word list. */
 function absolutePattern(words: readonly string[]): RegExp | undefined {
   const cleaned = words.map(word => word.trim()).filter(word => word.length > 0)
@@ -130,14 +133,20 @@ export function scanAnswer(answer: string, evidence: string, options: ScanOption
     }
   }
   const known = numbersIn(evidence)
-  const numbersWithUnit: string[] = []
+  const numbers: string[] = []
   const numbersNotInEvidence: ScanFinding[] = []
   for (const match of answer.matchAll(numberWithUnitPattern(options.extraUnits ?? []))) {
     const literal = match[1] ?? ''
-    numbersWithUnit.push(match[0])
+    numbers.push(match[0])
     if (!known.has(normalizeNumber(literal))) {
       numbersNotInEvidence.push({ kind: 'number-not-in-evidence', match: match[0], sentence: sentenceAt(answer, match.index) })
     }
   }
-  return { absolutes, numbersNotInEvidence, numbersWithUnit }
+  for (const match of answer.matchAll(LITERAL_PATTERN)) {
+    numbers.push(match[0])
+    if (!evidence.includes(match[0].replace(/^v/, ''))) {
+      numbersNotInEvidence.push({ kind: 'number-not-in-evidence', match: match[0], sentence: sentenceAt(answer, match.index) })
+    }
+  }
+  return { absolutes, numbersNotInEvidence, numbers }
 }

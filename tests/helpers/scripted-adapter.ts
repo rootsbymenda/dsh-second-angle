@@ -35,9 +35,13 @@ export function toolReply(callId: string, name: string, args: object): StreamChu
 /** A model adapter that replays a script, one entry per request, and records every request. */
 export class ScriptedAdapter extends LlmAdapter {
   readonly requests: GenerateOptions[] = []
+  private readonly script: ScriptEntry[]
+  private readonly reasoning: LlmModelReasoningInfo | undefined
 
-  constructor(private readonly script: ScriptEntry[], private readonly reasoning?: LlmModelReasoningInfo) {
+  constructor(script: ScriptEntry[], reasoning?: LlmModelReasoningInfo) {
     super()
+    this.script = script
+    this.reasoning = reasoning
   }
 
   /** Entries not consumed yet. */

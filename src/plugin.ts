@@ -358,7 +358,7 @@ export function createSecondAngle(runtime: HarnessRuntime): (ctx: Context, raw: 
       const evidence = renderEvidence(turnRecord.tools, config.maxEvidenceChars)
       const scan = scanAnswer(answer, usedTool ? evidence.text : '', scanOptions)
       if (!usedTool) {
-        if (scan.absolutes.length === 0 && scan.numbersWithUnit.length === 0) return skip('no-tool-no-markers', scan)
+        if (scan.absolutes.length === 0 && scan.numbers.length === 0) return skip('no-tool-no-markers', scan)
         if (config.memoryTurns === 'skip') return skip('memory-turn', scan)
         const findings: ScanFinding[] = [...scan.absolutes, ...config.flagMemoryNumbers ? scan.numbersNotInEvidence : []]
         if (findings.length === 0) return skip('memory-turn-numbers-only', scan)

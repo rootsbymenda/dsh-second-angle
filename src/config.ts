@@ -27,11 +27,11 @@ export interface Config {
    * model call); `skip` leaves such turns alone. Default `scanner`.
    */
   memoryTurns?: 'scanner' | 'skip'
-  /** In a turn that ran no tool, also flag numbers with units (they cannot be checked against anything). Default `false`. */
+  /** In a turn that ran no tool, also flag numeric claims (they cannot be checked against anything). Default `false`. */
   flagMemoryNumbers?: boolean
   /** Answers shorter than this many characters are not audited. Default 20. */
   minAnswerChars?: number
-  /** When the scanner finds nothing, the model is still called if the turn read at least this many characters of tool output. Default 200. */
+  /** When the scanner finds nothing, the model is called only if the turn read at least this many characters of tool output. Default 1 (any output); raise it to save model calls. */
   minEvidenceChars?: number
   /** Auditor route; default the audited turn's own provider. */
   auditorProvider?: string
@@ -110,7 +110,7 @@ export const DEFAULTS: ResolvedConfig = {
   memoryTurns: 'scanner',
   flagMemoryNumbers: false,
   minAnswerChars: 20,
-  minEvidenceChars: 200,
+  minEvidenceChars: 1,
   auditorProvider: undefined,
   auditorModel: undefined,
   auditorReasoningEffort: 'off',
