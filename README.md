@@ -27,10 +27,12 @@ dsh plugin --profile <profile> add ./dsh-second-angle-0.1.0.tgz
 dsh plugin --profile <profile> add github:rootsbymenda/dsh-second-angle#<commit>
 ```
 
-A GitHub install builds the plugin with its `prepare` script, and pnpm runs that only after you allow it in the
-profile's `pnpm-workspace.yaml` (`allowBuilds: { dsh-second-angle: true }`, see the harness guide
-*Package and install a plugin*). Check the result with `dsh --profile <profile> --dump-config`: the tree shows a
-`# == dsh-second-angle` layer. Requires DeepSeek Harness `>=0.2.1-rc.2 <0.3.0` (declared in `engines.dsh`).
+A git install builds the plugin with its `prepare` script, and pnpm runs that only after you allow it: the first
+`add` stops with `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED` and prints the exact key to add under `allowBuilds` in the
+profile's `pnpm-workspace.yaml` (for a git install the key is `dsh-second-angle@<the spec you gave>`); add it and run
+the `add` again (see the harness guide *Package and install a plugin*). Check the result with
+`dsh --profile <profile> --dump-config`: the tree shows a `# == dsh-second-angle` layer. Requires DeepSeek Harness
+`>=0.2.1-rc.2 <0.3.0` (declared in `engines.dsh`).
 
 ## Configure
 
