@@ -13,5 +13,6 @@ First version, built and tested against DeepSeek Harness 0.2.1-rc.2.
 - One audit per turn (the hook fires again after a steered correction).
 - Flags go to a `plugin:second-angle/verdict` Session record, one stderr line, and the harness logger, and optionally
   to a notice that reaches the model and the chat with the next turn.
-- `sync` and `async` modes, a latency bound, and fail-open behavior on every auditor error, timeout, or empty output.
+- `sync` and `async` modes, a latency bound that holds even when a provider ignores the abort, and fail-open
+  behavior on every auditor error, timeout, or empty output.
 - A public eval set of 24 cases built from the harness's own documentation, with a runner and a scorer.

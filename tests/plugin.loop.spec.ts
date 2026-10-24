@@ -242,6 +242,15 @@ describe('fails open', () => {
     expect(verdicts(agent)[0]).toMatchObject({ status: 'timeout', detail: 'no verdict within 150 ms' })
   })
 
+  it('stops waiting for an auditor that ignores the abort, within maxLatencyMs plus a grace second', async () => {
+    const { agent, mainModel } = await setup([toolReply('c1', 'read_facts', {}), textReply('The facts file lists 3 entries.')], ['stall'], { maxLatencyMs: 150 })
+    const started = Date.now()
+    await ask(agent, 'How many entries?')
+    expect(Date.now() - started).toBeLessThan(4000)
+    expect(mainModel.requests).toHaveLength(2)
+    expect(count(agent, 'turn/end')).toBe(1)
+  })
+
   it('falls back to the scanner\'s absolute words when the auditor gives no verdict', async () => {
     const { agent } = await setup([toolReply('c1', 'read_facts', {}), textReply('Nobody has more than 3 entries.')], [textReply('')])
     await ask(agent, 'How many entries?')

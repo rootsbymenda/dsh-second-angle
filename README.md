@@ -52,7 +52,7 @@ the row's whole `config`):
 |---|---|---|
 | `enabled` | `true` | master switch |
 | `mode` | `sync` | `sync` waits for the verdict before the turn closes (so a contradiction can steer a correction in the same turn); `async` lets the turn close at once and attaches the verdict later |
-| `maxLatencyMs` | `45000` | an audit that takes longer is abandoned; the turn goes on |
+| `maxLatencyMs` | `45000` | an audit that takes longer is abandoned and the turn goes on (a sync turn waits at most one second more, even when a provider ignores the abort) |
 | `includeSubagents` | `false` | also audit sub-agent turns |
 | `memoryTurns` | `scanner` | a turn that ran no tool never goes to the model; `scanner` reports its absolute words as a flag, `skip` leaves it alone |
 | `flagMemoryNumbers` | `false` | in such a turn, also flag numeric claims |

@@ -33,6 +33,9 @@ export const RECORD_TYPE = 'plugin:second-angle/verdict'
 /** The message source stamped on everything this plugin steers or injects. */
 export const SOURCE_KIND = 'second-angle'
 
+/** Extra wait past `maxLatencyMs` (and on unload) before the plugin stops waiting for an audit whose abort was not honored. */
+const SYNC_GRACE_MS = 1000
+
 /** One verdict as written to the Session log; plain JSON. */
 export interface VerdictRecord {
   readonly v: 1
@@ -144,7 +147,11 @@ export function createSecondAngle(runtime: HarnessRuntime): (ctx: Context, raw: 
 
     ctx.effect(() => async () => {
       lifetime.abort()
-      await Promise.allSettled(inflight)
+      // Aborted audits settle promptly; one whose adapter ignores the abort is not waited for past the grace period.
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const bound = new Promise<void>((resolve) => { timer = setTimeout(resolve, SYNC_GRACE_MS) })
+      await Promise.race([Promise.allSettled(inflight), bound])
+      clearTimeout(timer)
     }, 'second-angle: abandon audits in flight')
 
     /** Write one verdict record; a write failure is logged, never thrown. */
@@ -324,16 +331,15 @@ export function createSecondAngle(runtime: HarnessRuntime): (ctx: Context, raw: 
           agent.steer(message(correction, steerSummary(routing.contradicted.length)))
           delivered.push('steer')
           status = 'steered'
-        } else if (config.asyncContradicted === 'followup') {
+        } else if (config.mode === 'async' && config.asyncContradicted === 'followup') {
           agent.followup(message(`Second angle on your answer in turn ${String(turn)}:\n${correction}`, steerSummary(routing.contradicted.length)))
           delivered.push('followup')
           status = 'steered'
+        } else if (config.mode === 'async' && config.asyncContradicted === 'notice') {
+          delivered.push(...deliverFlag(agent, turn, flagText(routing.contradicted, config.maxListedClaims), routing.contradicted.length, true))
         } else {
+          // A cancelled or already-closed sync turn, or asyncContradicted=flag: the contradiction is flagged, never pushed.
           flagged = [...routing.contradicted, ...flagged]
-          if (config.asyncContradicted === 'notice') {
-            delivered.push(...deliverFlag(agent, turn, flagText(routing.contradicted, config.maxListedClaims), routing.contradicted.length, true))
-            flagged = routing.flagged
-          }
         }
       }
       if (flagged.length > 0) delivered.push(...deliverFlag(agent, turn, flagText(flagged, config.maxListedClaims), flagged.length))
@@ -384,12 +390,15 @@ export function createSecondAngle(runtime: HarnessRuntime): (ctx: Context, raw: 
       const job = audit(agent, turn, answer, evidence, scan, signal).catch((error: unknown) => {
         ctx.logger.warn(`second-angle: audit of turn ${String(turn)} failed open: ${describe(error)}`)
       })
-      if (config.mode === 'sync') {
-        await job
-        return
-      }
       inflight.add(job)
       void job.finally(() => { inflight.delete(job) })
+      if (config.mode === 'sync') {
+        // The audit's own signal enforces maxLatencyMs; this bound also holds when an adapter ignores the abort.
+        let timer: ReturnType<typeof setTimeout> | undefined
+        const bound = new Promise<void>((resolve) => { timer = setTimeout(resolve, config.maxLatencyMs + SYNC_GRACE_MS) })
+        await Promise.race([job, bound])
+        clearTimeout(timer)
+      }
     }
 
     ctx.on('session/event', (session: Session, event: RecordedEvent) => {

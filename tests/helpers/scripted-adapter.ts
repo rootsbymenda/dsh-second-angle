@@ -1,12 +1,13 @@
 import type { GenerateOptions, LlmModelReasoningInfo, LlmResolvedModelInfo, StreamChunk } from '@deepseek-ai/dsh-llm'
 import { LlmAdapter, ToolCallId } from '@deepseek-ai/dsh-llm'
 
-/** One scripted model reply: chunks, a function of the request, delayed chunks, `hang` (waits until aborted), or `throw`. */
+/** One scripted model reply: chunks, a function of the request, delayed chunks, `hang` (waits until aborted), `stall` (never settles, ignores the abort), or `throw`. */
 export type ScriptEntry =
   | StreamChunk[]
   | ((options: GenerateOptions) => StreamChunk[])
   | { readonly delayMs: number; readonly chunks: StreamChunk[] }
   | 'hang'
+  | 'stall'
   | 'throw'
 
 /** A text reply that ends with `stop`. */
@@ -58,6 +59,11 @@ export class ScriptedAdapter extends LlmAdapter {
     const entry = this.script.shift()
     if (entry === undefined) throw new Error('ScriptedAdapter: script exhausted')
     if (entry === 'throw') throw new Error('scripted provider failure')
+    if (entry === 'stall') {
+      // Ignores the abort signal on purpose: an adapter that never settles.
+      await new Promise<void>(() => {})
+      return
+    }
     if (entry === 'hang') {
       await new Promise<void>((_resolve, reject) => {
         if (options.signal?.aborted) { reject(new Error('aborted')); return }
