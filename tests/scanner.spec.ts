@@ -50,6 +50,14 @@ describe('scanAnswer: numbers with units', () => {
   })
 })
 
+describe('scanAnswer: known limits', () => {
+  it('does not see spelled-out numbers or absolute words outside its (English) list', () => {
+    const result = scanAnswer('The store holds about four such chats. Niemand hat es gemessen.', '', options)
+    expect(result.numbers).toEqual([])
+    expect(result.absolutes).toEqual([])
+  })
+})
+
 describe('normalizeNumber', () => {
   it('drops thousands separators, leading zeros, and trailing fraction zeros', () => {
     expect(normalizeNumber('1,024')).toBe('1024')
