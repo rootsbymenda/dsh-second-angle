@@ -101,8 +101,8 @@ call is not written to the Session log. Output wrapped in prose or code fences, 
 handled: a usable verdict is salvaged, otherwise the turn is left alone.
 
 **The routing.** A CONTRADICTED claim whose cited evidence text occurs in the tool output steers one short
-correction message (a notice-form message, so the Web chat shows its one-line summary); the model revises in the
-same turn. OVERSTATED and UNSUPPORTED claims, and contradictions whose quote is not found, become a flag. The
+correction message (a notice-form message, which the harness chat code renders as a one-line summary row; we have
+not checked that in a browser); the model revises in the same turn. OVERSTATED and UNSUPPORTED claims, and contradictions whose quote is not found, become a flag. The
 answer's text is never held back (it has already streamed); in `sync` mode the turn closes after the audit, within
 `maxLatencyMs`. Every auditor error, timeout, or empty output fails open: the turn continues unchanged and the failure
 is logged and recorded.
@@ -117,8 +117,8 @@ is logged and recorded.
   `dsh --profile headless` the answer goes to stdout and this line to stderr, right after it.
 - **Harness logger** (default on): the same line as a warning through `ctx.logger`, for hosts that export their logs.
 - **Notice** (`flagNotice: true`): the same line injected after the turn closes. It reaches the model with the next
-  turn, and the Web chat shows its summary row then. It is not injected during the turn: an injected message at the
-  stop boundary would force another step.
+  turn, and the harness chat code renders it then as a notice row (not checked in a browser). It is not injected
+  during the turn: an injected message at the stop boundary would force another step.
 
 ## Public eval
 
