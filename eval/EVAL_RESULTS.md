@@ -53,6 +53,6 @@ Set `auditorReasoningEffort: low` to trade latency for the stricter labels seen 
   grep covers only the files it searched; `head` shows only part). A mistake whose fact is on no card was not
   measured separately.
 - **The errors are clean.** Each planted claim contradicts or outruns a short, verbatim excerpt; real answers mix many
-  claims and longer outputs. Our two integration audits on a real harness instance (one steered correction, one clean
-  answer) took 2.1 s and 2.6 s, within this range.
+  claims and longer outputs. Our four integration audits on a real harness instance (two steered corrections, one clean
+  answer, one flagged overstatement) took 2.1–2.9 s, within this range.
 - **One model.** Results for other models, or for the harness's other providers, are not covered.

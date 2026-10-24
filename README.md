@@ -10,7 +10,7 @@ On a private bench of our own sessions, a model auditor given one tool-using ans
 claims) plus that turn's own tool output, with thinking off and a short facts-and-limits card, flagged all three
 errors in 5 of 5 runs with different sampling seeds (and, each time, one true claim the turn had not read), named the
 right reason for the hardest one in 5 of 5, and took about 16 seconds a check; with short thinking on and the same
-card it was 7–11 times slower there and no more accurate. A no-model scan for absolute words caught only the two
+card it was about 9–11 times slower there and no more accurate. A no-model scan for absolute words caught only the two
 errors that used one, and on answers written without any tool read an evidence-only auditor flagged every claim, true
 or false. So the plugin feeds the auditor the turn's own reads, keeps thinking off, never sends a turn without reads
 to the model, and puts the free scan in front.
@@ -28,10 +28,11 @@ dsh plugin --profile <profile> add github:rootsbymenda/dsh-second-angle#<commit>
 ```
 
 A git install builds the plugin with its `prepare` script (`tsc -p tsconfig.build.json`, which writes `lib/`), and
-pnpm runs that only after you allow it: the first
-`add` stops with `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED` and prints the exact key to add under `allowBuilds` in the
-profile's `pnpm-workspace.yaml` (for a git install the key is `dsh-second-angle@<the spec you gave>`); add it and run
-the `add` again (see the harness guide *Package and install a plugin*). Check the result with
+pnpm runs that only after you allow it: the first `add` stops with `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED` and prints
+the exact key to add under `allowBuilds` in the profile's `pnpm-workspace.yaml`. For a git install that key is the
+package name plus the source and commit pnpm resolved, not the spec you typed, and a bare package name does not
+approve a git dependency; copy the key as printed, add it, and run the `add` again (see the harness guide *Package and
+install a plugin*). Check the result with
 `dsh --profile <profile> --dump-config`: the tree shows a `# == dsh-second-angle` layer. Requires DeepSeek Harness
 `>=0.2.1-rc.2 <0.3.0` (declared in `engines.dsh`).
 
@@ -137,8 +138,8 @@ went through the `allowBuilds` step described above.
 ## Public eval
 
 See [`eval/`](eval/README.md): 24 cases built from verbatim excerpts of the harness's own documentation (8
-contradicted, 8 unsupported or overstated, 8 clean controls on the same evidence), run through the plugin's own
-auditor path. Results and every failure: [`eval/EVAL_RESULTS.md`](eval/EVAL_RESULTS.md).
+contradicted, 8 unsupported or overstated, 8 clean controls, six of them on the same evidence as a planted case), run
+through the plugin's own auditor path. Results and every failure: [`eval/EVAL_RESULTS.md`](eval/EVAL_RESULTS.md).
 
 With thinking off (the default), on DeepSeek V4.1 Flash served locally:
 
