@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.1.0 — unreleased
+## 0.1.0 — 2026-10-24
 
-First version, built and tested against DeepSeek Harness 0.2.1-rc.2.
+First version, built and tested against DeepSeek Harness 0.2.1-rc.2, and also checked on 0.2.1-rc.3.
 
 - Audits a finished turn at `agent/turn-stopping`: rebuilds the turn's tool calls, tool output, and final text from the
   Session events, gates the turn, and asks a model auditor (thinking off, a facts-and-limits card, a hard output cap).
