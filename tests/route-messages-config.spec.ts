@@ -4,6 +4,7 @@ import { renderEvidence } from '../src/evidence.ts'
 import { boundSummary, flagText, noticeSummary, scannerFlagText, steerSummary, steerText, SUMMARY_MAX_CHARS } from '../src/messages.ts'
 import { buildAuditorPrompt, DEFAULT_CARD } from '../src/prompt.ts'
 import { routeVerdicts } from '../src/route.ts'
+import { resolveEffort } from '../src/auditor.ts'
 import type { ClaimVerdict } from '../src/verdict.ts'
 
 const v = (label: ClaimVerdict['label'], quoteFound = false, claim = 'c'): ClaimVerdict =>
@@ -97,5 +98,25 @@ describe('renderEvidence and buildAuditorPrompt', () => {
     expect(prompt.user).toContain('evidence text')
     expect(prompt.user.endsWith('Emit the JSON now.')).toBe(true)
     expect(buildAuditorPrompt('a', 'e', []).system).not.toContain('FACTS AND LIMITS CARD')
+  })
+})
+
+describe('resolveEffort', () => {
+  const llmWith = (resolve: () => Promise<{ reasoning?: { efforts: { id: string }[] } }>) => ({
+    resolveModelInfo: resolve,
+    stream: () => { throw new Error('not used') },
+  })
+  it('sends the wanted effort only when the route offers it', async () => {
+    const offered = await resolveEffort(llmWith(() => Promise.resolve({ reasoning: { efforts: [{ id: 'off' }, { id: 'high' }] } })), 'p', 'm', 'off', new AbortController().signal)
+    expect(offered).toEqual({ effort: 'off' })
+    const missing = await resolveEffort(llmWith(() => Promise.resolve({})), 'p', 'm', 'off', new AbortController().signal)
+    expect(missing.effort).toBeUndefined()
+    expect(missing.note).toContain('offers no "off" reasoning effort')
+    expect(missing.transient).toBeUndefined()
+  })
+  it('marks a failed lookup as transient so it is not cached', async () => {
+    const failed = await resolveEffort(llmWith(() => Promise.reject(new Error('cancelled'))), 'p', 'm', 'off', new AbortController().signal)
+    expect(failed).toMatchObject({ transient: true })
+    expect(await resolveEffort(llmWith(() => Promise.resolve({})), 'p', 'm', '', new AbortController().signal)).toEqual({})
   })
 })

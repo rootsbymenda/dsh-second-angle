@@ -8,8 +8,8 @@ evidence contradicts a claim, and flags claims the evidence does not back.
 
 On a private bench of our own sessions, a model auditor given the answer plus the tool output of its own turn, with
 thinking off and a short facts-and-limits card, flagged all three known errors in a tool-using answer on 5 of 5
-seeds, named the right reason for the hardest one on 5 of 5, and needed about 16 seconds a check; with thinking on it
-was 7–11 times slower and no more accurate. A no-model scan for absolute words caught only the two errors that used
+seeds (and, each time, one true claim the turn had not read), named the right reason for the hardest one on 5 of 5,
+and needed about 16 seconds a check; with thinking on it was 7–11 times slower and no more accurate. A no-model scan for absolute words caught only the two errors that used
 one, and on answers written without any tool read the same auditor flagged every claim, true or false. So the plugin
 feeds the auditor the turn's own reads, keeps thinking off, never sends a turn without reads to the model, and puts
 the free scan in front.
@@ -119,7 +119,17 @@ See [`eval/`](eval/README.md): 24 cases built from verbatim excerpts of the harn
 contradicted, 8 unsupported or overstated, 8 clean controls on the same evidence), run through the plugin's own
 auditor path. Results and every failure: [`eval/EVAL_RESULTS.md`](eval/EVAL_RESULTS.md).
 
-EVAL_SUMMARY_PLACEHOLDER
+With thinking off (the default), on DeepSeek V4.1 Flash served locally:
+
+| contradicted: steered | contradicted: acted on | unsupported or overstated: flagged | clean: false flags | no verdict | median per audit |
+|---|---|---|---|---|---|
+| 7/8 | 8/8 | 8/8 | 0/8 | 0/24 | 3.6 s |
+
+The one contradiction that was not steered (C7) came back OVERSTATED, with the right reason, and was flagged. The set
+is small and written by us, and the default card speaks to three of its cases; the results file says what the
+numbers do and do not show.
+
+EFFORT_LOW_README_PLACEHOLDER
 
 ## Limits
 
@@ -136,6 +146,8 @@ EVAL_SUMMARY_PLACEHOLDER
 - **The card matters, and it is not magic.** The bench showed the auditor uses a fact on its card reliably; it did not
   show help on a mistake whose fact is not on the card. The default card is general; a house card that gains one line
   per real mistake works best.
+- **The auditor reads untrusted tool output.** A crafted output can bias its verdict, and a steering message carries
+  the auditor's one-line reason. Steering fires only on a contradiction whose cited text occurs in the tool output.
 - **The scanner is English-only** and misses spelled-out numbers ("four").
 - **Long tool output is shortened** past `maxEvidenceChars`; the record says when.
 - **Async mode cannot steer**: the turn is closed by then; a contradiction becomes a notice (or a follow-up turn).

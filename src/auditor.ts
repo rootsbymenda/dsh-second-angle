@@ -107,6 +107,8 @@ export interface EffortDecision {
   readonly effort?: string
   /** Why the wanted effort is not sent, for a one-time log line. */
   readonly note?: string
+  /** Set when the lookup itself failed (for example it was cancelled); such a decision is not cached. */
+  readonly transient?: true
 }
 
 /**
@@ -126,6 +128,6 @@ export async function resolveEffort(llm: AuditorLlm, provider: string, model: st
     if (offered.includes(wanted)) return { effort: wanted }
     return { note: `route ${provider}/${model} offers no "${wanted}" reasoning effort (offers: ${offered.length > 0 ? offered.join(', ') : 'none'}); the auditor runs at the route default and may be slower` }
   } catch (error: unknown) {
-    return { note: `could not read the reasoning efforts of ${provider}/${model} (${error instanceof Error ? error.message : String(error)}); the auditor runs at the route default` }
+    return { note: `could not read the reasoning efforts of ${provider}/${model} (${error instanceof Error ? error.message : String(error)}); the auditor runs at the route default`, transient: true }
   }
 }

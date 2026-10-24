@@ -233,6 +233,8 @@ export function createSecondAngle(runtime: HarnessRuntime): (ctx: Context, raw: 
       if (decision === undefined) {
         decision = resolveEffort(llm, route.provider, route.model, config.auditorReasoningEffort, signal).then((result) => {
           if (result.note !== undefined) ctx.logger.warn(`second-angle: ${result.note}`)
+          // A failed lookup (for example a cancelled turn) is retried on the next audit instead of sticking.
+          if (result.transient === true) efforts.delete(key)
           return result
         })
         efforts.set(key, decision)
