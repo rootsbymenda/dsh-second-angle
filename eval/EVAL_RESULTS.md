@@ -22,7 +22,25 @@ OVERSTATED with the right reason ("they are files (12 guides × 3 files each: .m
 plugin flagged it instead of steering. U1–U8 were all flagged on the planted claim (U6, an overstatement, was labelled UNSUPPORTED). K1–K8 drew no
 action; every claim in them came back SUPPORTED with a quote found in the evidence.
 
-EFFORT_LOW_PLACEHOLDER
+## Effort «low» (thinking on, short) — the same 24 cases
+
+| contradicted: steered | contradicted: acted on | unsupported: flagged | overstated: flagged | clean: false flags | no verdict | median s / call |
+|---|---|---|---|---|---|---|
+| 8/8 | 8/8 | 4/4 | 4/4 | 0/8 | 0/24 | 5.85 (range 2.0–16.5) |
+
+Sent as `chat_template_kwargs: {"enable_thinking": true, "reasoning_effort": "low"}` with the same 2048-token cap;
+every call finished within the cap (median 897 characters of reasoning, at most 984 output tokens). Differences
+from thinking off:
+- **C7** came back CONTRADICTED ("so there are 12 distinct guides, not 36") and was steered instead of flagged.
+- **U7** drew a steer on a claim we had written as true: "caps each event at 32 KiB". The evidence says the
+  per-event cap exempts the terminal `final` event, so the auditor was right that our sentence overstated, but
+  CONTRADICTED is stronger than the evidence supports (OVERSTATED would fit). The planted claim in U7 ("not changed
+  since version 0.1") was flagged UNSUPPORTED as intended.
+- It took about 1.6 times as long per call (median 5.85 s against 3.6 s); 21 of its 24 calls took longer than the
+  thinking-off median.
+
+The plugin keeps thinking off by default: it acted on every planted claim either way, at the lower latency and load.
+Set `auditorReasoningEffort: low` to trade latency for the stricter labels seen here.
 
 ## What this does and does not show
 

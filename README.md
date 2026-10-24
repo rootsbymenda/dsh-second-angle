@@ -9,7 +9,7 @@ evidence contradicts a claim, and flags claims the evidence does not back.
 On a private bench of our own sessions, a model auditor given the answer plus the tool output of its own turn, with
 thinking off and a short facts-and-limits card, flagged all three known errors in a tool-using answer on 5 of 5
 seeds (and, each time, one true claim the turn had not read), named the right reason for the hardest one on 5 of 5,
-and needed about 16 seconds a check; with thinking on it was 7–11 times slower and no more accurate. A no-model scan for absolute words caught only the two errors that used
+and needed about 16 seconds a check; with thinking on it was 7–11 times slower there and no more accurate. A no-model scan for absolute words caught only the two errors that used
 one, and on answers written without any tool read the same auditor flagged every claim, true or false. So the plugin
 feeds the auditor the turn's own reads, keeps thinking off, never sends a turn without reads to the model, and puts
 the free scan in front.
@@ -129,7 +129,9 @@ The one contradiction that was not steered (C7) came back OVERSTATED, with the r
 is small and written by us, and the default card speaks to three of its cases; the results file says what the
 numbers do and do not show.
 
-EFFORT_LOW_README_PLACEHOLDER
+With `auditorReasoningEffort: low` (short thinking) the same set gave 8/8 steered, 8/8 flagged, 0/8 false flags,
+and no missing verdicts, at a median of 5.85 s per audit (1.6 times longer). It also steered once on a sentence we had
+written as true but which did overstate its evidence.
 
 ## Limits
 

@@ -51,7 +51,7 @@ for (const effort of efforts) {
   const clean = of('clean')
   const falseFlags = clean.filter(row => row.action !== 'none').length
   const noVerdict = mine.filter(row => row.verdict !== 'verdict').length
-  console.log(`| ${effort} | ${String(steered)}/${String(contradicted.length)} | ${String(actedOn)}/${String(contradicted.length)} | ${String(flaggedOn('unsupported'))}/${String(of('unsupported').length)} | ${String(flaggedOn('overstated'))}/${String(of('overstated').length)} | ${String(falseFlags)}/${String(clean.length)} | ${String(noVerdict)}/${String(mine.length)} | ${median(mine.map(row => row.seconds)).toFixed(1)} |`)
+  console.log(`| ${effort} | ${String(steered)}/${String(contradicted.length)} | ${String(actedOn)}/${String(contradicted.length)} | ${String(flaggedOn('unsupported'))}/${String(of('unsupported').length)} | ${String(flaggedOn('overstated'))}/${String(of('overstated').length)} | ${String(falseFlags)}/${String(clean.length)} | ${String(noVerdict)}/${String(mine.length)} | ${median(mine.map(row => row.seconds)).toFixed(2)} |`)
 }
 console.log('\nPer case (effort: action, planted claim named?):')
 for (const id of new Set(rows.map(row => row.id))) {
