@@ -17,29 +17,44 @@ to the model, and puts the free scan in front.
 
 ## Install
 
-The plugin is a harness bundle (`"dsh": { "bundle": … }` in `package.json`). Install it into a profile:
+The plugin is a harness bundle (`"dsh": { "bundle": … }` in `package.json`). Install it into a profile. The examples
+use the shipped `headless` profile, which runs one task from the command line; another profile name gets the base
+layers and the plugin only. If you run the harness through `npx @deepseek-ai/dsh`, type that in place of `dsh`.
+`dsh plugin` uses the pnpm on your PATH.
 
 ```sh
-# from a release tarball (prebuilt, no install-time build)
-dsh plugin --profile <profile> add ./dsh-second-angle-0.1.0.tgz
+# from the release tarball (prebuilt, no build)
+curl -LO https://github.com/rootsbymenda/dsh-second-angle/releases/download/v0.1.0/dsh-second-angle-0.1.0.tgz
+dsh plugin --profile headless add ./dsh-second-angle-0.1.0.tgz
 
 # or from GitHub, pinned to a commit
-dsh plugin --profile <profile> add github:rootsbymenda/dsh-second-angle#<commit>
+dsh plugin --profile headless add github:rootsbymenda/dsh-second-angle#<commit>
 ```
 
 A git install builds the plugin with its `prepare` script (`tsc -p tsconfig.build.json`, which writes `lib/`), and
 pnpm runs that only after you allow it: the first `add` stops with `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED` and prints
-the exact key to add under `allowBuilds` in the profile's `pnpm-workspace.yaml`. For a git install that key is the
-package name plus the source and commit pnpm resolved, not the spec you typed, and a bare package name does not
-approve a git dependency; copy the key as printed, add it, and run the `add` again (see the harness guide *Package and
-install a plugin*). Check the result with
-`dsh --profile <profile> --dump-config`: the tree shows a `# == dsh-second-angle` layer. Requires DeepSeek Harness
-`>=0.2.1-rc.2 <0.3.0` (declared in `engines.dsh`).
+the key to add under `allowBuilds` in the profile's `pnpm-workspace.yaml`. For a GitHub install the key has this
+form, where `<commit>` is the full 40-character commit pnpm resolved:
+
+```yaml
+allowBuilds:
+  dsh-second-angle@https://codeload.github.com/rootsbymenda/dsh-second-angle/tar.gz/<commit>: true
+```
+
+pnpm prints the key on one long line, and a terminal narrower than the line wraps it; if it breaks across lines, join
+the pieces with no space. A bare package name does not approve a git dependency (the example in the harness guide
+[*Installing from GitHub*](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/develop/basic/publish.md#installing-from-github-the-build-script-catch)
+uses one). Add the key and run the same `add` again. The `add` warns about peer dependencies (the running harness
+provides them), and a git install first downloads the build tools (about 105 MB); the tarball needs no build.
+
+Check the result with `dsh --profile headless --dump-config`: the tree shows a `# == dsh-second-angle` layer. Then
+run a task with `dsh headless "<task>"`. Requires DeepSeek Harness `>=0.2.1-rc.2 <0.3.0` (declared in `engines.dsh`).
 
 ## Configure
 
-Every field is optional. Override them in your profile's `cordis.patch.yml` by restating the row (a patch replaces
-the row's whole `config`):
+Every field is optional. Override them in your profile's `cordis.patch.yml` (in `$DSH_HOME/profiles/<profile>/`,
+`~/.dsh/profiles/<profile>/` by default) by restating the row (a patch replaces the row's whole `config`). In a new
+profile that file holds `[]`: replace that line with the row.
 
 ```yaml
 - id: second-angle
@@ -47,7 +62,7 @@ the row's whole `config`):
     mode: sync                 # sync | async
     maxLatencyMs: 45000
     auditorReasoningEffort: 'off'
-    cardFile: /path/to/house-facts.txt   # one fact per line, appended to the card
+    # cardFile: /path/to/house-facts.txt   # one fact per line, appended to the card
     flagNotice: true
 ```
 
@@ -67,7 +82,7 @@ the row's whole `config`):
 | `auditorTemperature` | `0` | auditor sampling temperature |
 | `maxEvidenceChars` | `48000` | longer tool output is shortened (head and tail kept, marked) |
 | `card` | 8 general lines (`DEFAULT_CARD` in `src/prompt.ts`) | facts-and-limits card; replaces the default |
-| `cardFile` | — | file whose lines are appended to the card, read at load |
+| `cardFile` | — | file whose lines are appended to the card, read at load; a missing file stops the plugin from loading (startup warning `1 entry did not activate`) |
 | `steer` | `true` | let a contradiction steer a correction |
 | `requireQuoteForSteer` | `true` | steer only when the cited evidence text is found in the tool output |
 | `maxListedClaims` | `3` | claims listed in one steering message or flag |
@@ -178,9 +193,12 @@ written as true but which did overstate its evidence.
 - **The scanner is English-only** and misses spelled-out numbers ("four").
 - **Long tool output is shortened** past `maxEvidenceChars`; the record says when.
 - **Async mode cannot steer**: the turn is closed by then; a contradiction becomes a notice (or a follow-up turn).
-- Built and tested against DeepSeek Harness 0.2.1-rc.2 only; harness APIs are pre-stable.
+- Built and tested against DeepSeek Harness 0.2.1-rc.2, and also checked on 0.2.1-rc.3 (install, tests, one live
+  turn); harness APIs are pre-stable.
 
 ## Development
+
+Needs Node 22.19+ or 24+, and pnpm (the repo pins 11.28.5 in `packageManager`).
 
 ```sh
 pnpm install
