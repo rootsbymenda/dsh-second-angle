@@ -1,6 +1,6 @@
 # dsh-second-angle
 
-A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that gives every finished turn a second
+A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin that gives a finished turn a second
 angle: it checks the answer's claims against the tool output that turn actually read, steers a correction when the
 evidence contradicts a claim, and flags claims the evidence does not back.
 
@@ -100,9 +100,10 @@ handled: a usable verdict is salvaged, otherwise the turn is left alone.
 
 **The routing.** A CONTRADICTED claim whose cited evidence text occurs in the tool output steers one short
 correction message (a notice-form message, so the Web chat shows its one-line summary); the model revises in the
-same turn. OVERSTATED and UNSUPPORTED claims, and contradictions whose quote is not found, become a flag. Nothing
-blocks the stream, and every auditor error, timeout, or empty output fails open: the turn continues unchanged and
-the failure is logged and recorded.
+same turn. OVERSTATED and UNSUPPORTED claims, and contradictions whose quote is not found, become a flag. The
+answer's text is never held back (it has already streamed); in `sync` mode the turn closes after the audit, within
+`maxLatencyMs`. Every auditor error, timeout, or empty output fails open: the turn continues unchanged and the failure
+is logged and recorded.
 
 ### How flags reach you
 
@@ -147,8 +148,9 @@ written as true but which did overstate its evidence.
   `minEvidenceChars` to trade coverage for latency.
 - **The stock Web chat does not render plugin records.** Flags live in the Session log, on stderr, and in the harness
   logger, and with `flagNotice` in the chat one turn later. A client renderer for the record is the obvious next step.
-- **Only this turn's reads count as evidence.** A claim the model knows from an earlier turn or from memory comes back
-  UNSUPPORTED; it may well be true. Treat such flags as "not checked this turn".
+- **Only this turn's reads count as evidence.** The auditor sees nothing else, so a claim the model knows from an
+  earlier turn or from memory has nothing to stand on and gets flagged (on our bench, one such true claim was flagged
+  every time); it may well be true. Treat such flags as "not checked this turn".
 - **The card matters, and it is not magic.** The bench showed the auditor uses a fact on its card reliably; it did not
   show help on a mistake whose fact is not on the card. The default card is general; a house card that gains one line
   per real mistake works best.

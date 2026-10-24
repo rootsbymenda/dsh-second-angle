@@ -1,7 +1,7 @@
 {
   "name": "dsh-second-angle",
   "version": "0.1.0",
-  "description": "A second angle on every finished DeepSeek Harness turn: checks the answer against the tool output the turn actually read, steers a correction on a contradiction, and flags claims the reads do not back.",
+  "description": "A second angle on a finished DeepSeek Harness turn: checks the answer against the tool output the turn actually read, steers a correction on a contradiction, and flags claims the reads do not back.",
   "keywords": [
     "dsh-plugin",
     "deepseek-harness",

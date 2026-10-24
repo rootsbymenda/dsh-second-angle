@@ -1,5 +1,5 @@
 /**
- * dsh-second-angle — a second angle on every finished DeepSeek Harness turn.
+ * dsh-second-angle — a second angle on a finished DeepSeek Harness turn.
  *
  * At `agent/turn-stopping` (after the final step, before `turn/end`) the plugin
  * checks the answer's claims against the tool output the turn actually read.
