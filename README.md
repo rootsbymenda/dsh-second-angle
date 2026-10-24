@@ -7,13 +7,12 @@ evidence contradicts a claim, and flags claims the evidence does not back.
 ## Why
 
 On a private bench of our own sessions, a model auditor given the answer plus the tool output of its own turn, with
-thinking off and a short facts-and-limits card, flagged all three known errors in a tool-using answer on 5 of 5
-seeds (and, each time, one true claim the turn had not read), named the right reason for the hardest one on 5 of 5,
-and needed about 16 seconds a check; with thinking on and the same card it was 7–11 times slower there and no more
-accurate. A no-model scan for absolute words caught only the two errors that used
-one, and on answers written without any tool read the same auditor flagged every claim, true or false. So the plugin
-feeds the auditor the turn's own reads, keeps thinking off, never sends a turn without reads to the model, and puts
-the free scan in front.
+thinking off and a short facts-and-limits card, flagged all three known errors in a tool-using answer on 5 of 5 seeds
+(and, each time, one true claim the turn had not read), named the right reason for the hardest one on 5 of 5, and
+needed about 16 seconds a check; with thinking on and the same card it was 7–11 times slower there and no more
+accurate. A no-model scan for absolute words caught only the two errors that used one, and on answers written without
+any tool read an evidence-only auditor flagged every claim, true or false. So the plugin feeds the auditor the turn's own
+reads, keeps thinking off, never sends a turn without reads to the model, and puts the free scan in front.
 
 ## Install
 
@@ -89,7 +88,8 @@ same turn. The event carries only `{ agent, turn, signal }`, so the plugin folds
 2. Only a turn that ran a tool, or whose answer has an absolute word or a numeric claim. A turn that ran no tool
    never reaches the model (an evidence-only auditor flags everything there); its absolute words become a scanner flag.
 3. The free scanner: absolute words, plus numeric claims (numbers with units, version strings, ISO dates) that do not
-   occur in the tool output. When it finds nothing and the turn read almost nothing, the model is not called.
+   occur in the tool output. When it finds nothing and the turn's tool output is shorter than `minEvidenceChars` (by
+   default: when it is empty), the model is not called.
 4. One audit per turn: the hook fires again after a steered correction, and the same turn is never audited twice.
 
 **The auditor** gets a fixed method prompt (list every factual claim; label each SUPPORTED, OVERSTATED, UNSUPPORTED,
@@ -100,12 +100,12 @@ the closing order "Emit the JSON now." By default it uses the turn's own provide
 call is not written to the Session log. Output wrapped in prose or code fences, cut off at the cap, or empty is
 handled: a usable verdict is salvaged, otherwise the turn is left alone.
 
-**The routing.** A CONTRADICTED claim whose cited evidence text occurs in the tool output steers one short
-correction message (a notice-form message, which the harness chat code renders as a one-line summary row; we have
-not checked that in a browser); the model revises in the same turn. OVERSTATED and UNSUPPORTED claims, and contradictions whose quote is not found, become a flag. The
-answer's text is never held back (it has already streamed); in `sync` mode the turn closes after the audit, within
-`maxLatencyMs`. Every auditor error, timeout, or empty output fails open: the turn continues unchanged and the failure
-is logged and recorded.
+**The routing.** A CONTRADICTED claim whose cited evidence text occurs in the tool output steers one short correction
+message (a notice-form message, which the harness chat code renders as a one-line summary row; we have not checked
+that in a browser); the model revises in the same turn. OVERSTATED and UNSUPPORTED claims, and contradictions whose
+quote is not found, become a flag. The answer's text is never held back (it has already streamed); in `sync` mode the
+turn closes after the audit, within `maxLatencyMs`. Every auditor error, timeout, or empty output fails open: the turn
+continues unchanged and the failure is logged and recorded.
 
 ### How flags reach you
 
@@ -146,16 +146,16 @@ written as true but which did overstate its evidence.
   produces a visible revision in the same turn; a flag cannot unsay anything.
 - **It shares the model.** By default the auditor is one more call to the same model: in `sync` mode the turn closes
   later by the audit time (2–3 seconds per audit in our integration runs with thinking off, bounded by
-  `maxLatencyMs`), and it adds load to a shared server. Use `async`, a separate `auditorModel`, or a higher
-  `minEvidenceChars` to trade coverage for latency.
+  `maxLatencyMs`), and it adds load to a shared server. Use `async` (no wait, but no steer), a separate
+  `auditorModel`, or a higher `minEvidenceChars` (fewer audits).
 - **The stock Web chat does not render plugin records.** Flags live in the Session log, on stderr, and in the harness
   logger, and with `flagNotice` in the chat one turn later. A client renderer for the record is the obvious next step.
 - **Only this turn's reads count as evidence.** The auditor sees nothing else, so a claim the model knows from an
   earlier turn or from memory has nothing to stand on and gets flagged (on our bench, one such true claim was flagged
   every time); it may well be true. Treat such flags as "not checked this turn".
 - **The card matters, and it is not magic.** The bench showed the auditor uses a fact on its card reliably; it did not
-  show help on a mistake whose fact is not on the card. The default card is general; a house card that gains one line
-  per real mistake works best.
+  show help on a mistake whose fact is not on the card. The default card is general; the intended use is a house card
+  that gains one line per real mistake.
 - **The auditor reads untrusted tool output.** A crafted output can bias its verdict, and a steering message carries
   the auditor's one-line reason. Steering fires only on a contradiction whose cited text occurs in the tool output.
 - **The scanner is English-only** and misses spelled-out numbers ("four").
