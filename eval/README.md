@@ -31,4 +31,6 @@ node eval/score.ts eval/results/raw.jsonl
 
 `--efforts` takes reasoning-effort ids; `off` sends `chat_template_kwargs: {"enable_thinking": false}` and any other id
 sends `{"enable_thinking": true, "reasoning_effort": "<id>"}` — the fields the harness pi-ai route sends for a
-`chat-template` model. Point `--wait-health` at a server health URL to wait while it is busy.
+`chat-template` model. To share a local server politely, `--wait-health <url>` waits before each call while the
+server's health JSON reports more than `--max-busy` (default 2) active requests, counted as `inflight + queued +` the
+values of `streams`.
