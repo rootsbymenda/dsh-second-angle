@@ -6,7 +6,8 @@ temperature 0) → `parseVerdict` → `routeVerdicts` (steer only on a contradic
 evidence) — against DeepSeek V4.1 Flash served locally behind an OpenAI-compatible endpoint. The transport in
 `run-eval.ts` is a small HTTP client that sends the fields the harness pi-ai route sends for the auditor call
 (`model`, a system and a user message, `max_tokens`, `temperature`, `chat_template_kwargs`); everything after it is the
-plugin's code. The runner waited for the server to be idle before each call, so the times are service times. Raw
+plugin's code. The server was shared: the first 19 thinking-off calls (C1–K3) were sent while at most one other
+request was running on it; the other 29 calls waited for an idle server. Times are wall-clock seconds per call. Raw
 output, with every claim, label, reason, and quote: [`results/raw-2026-10-24.jsonl`](results/raw-2026-10-24.jsonl).
 Scored with `node eval/score.ts eval/results/raw-2026-10-24.jsonl`.
 
@@ -37,7 +38,8 @@ from thinking off:
   CONTRADICTED is stronger than the evidence supports (OVERSTATED would fit). The planted claim in U7 ("not changed
   since version 0.1") was flagged UNSUPPORTED as intended.
 - It took about 1.6 times as long per call (median 5.85 s against 3.6 s); 21 of its 24 calls took longer than the
-  thinking-off median.
+  thinking-off median. Most thinking-off calls shared the server with one other request and every effort-low call
+  ran alone, so the real gap is, if anything, larger.
 
 The plugin keeps thinking off by default: it acted on every planted claim either way, at the lower latency and load.
 Set `auditorReasoningEffort: low` to trade latency for the stricter labels seen here.
