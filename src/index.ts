@@ -71,6 +71,7 @@ export const Config: z<Config> = z.object({
   maxListedClaims: z.number().default(DEFAULTS.maxListedClaims),
   flagRecord: z.boolean().default(DEFAULTS.flagRecord),
   flagLog: z.boolean().default(DEFAULTS.flagLog),
+  flagStderr: z.boolean().default(DEFAULTS.flagStderr),
   flagNotice: z.boolean().default(DEFAULTS.flagNotice),
   asyncContradicted: z.union(['notice', 'followup', 'flag']).default(DEFAULTS.asyncContradicted),
   recordSkips: z.boolean().default(DEFAULTS.recordSkips),
@@ -83,4 +84,5 @@ export const apply = createSecondAngle({
   createUserMessage: input => createUserMessage({ content: [...input.content], source: input.source }),
   appendRecord: (session, data) => { appendPluginRecord(session, RECORD_TYPE, data) },
   now: () => performance.now(),
+  writeDiagnostic: (line) => { process.stderr.write(`${line}\n`) },
 })

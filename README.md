@@ -67,7 +67,8 @@ the row's whole `config`):
 | `requireQuoteForSteer` | `true` | steer only when the cited evidence text is found in the tool output |
 | `maxListedClaims` | `3` | claims listed in one steering message or flag |
 | `flagRecord` | `true` | write a `plugin:second-angle/verdict` record into the Session log |
-| `flagLog` | `true` | write each flag as a warning in the process log |
+| `flagStderr` | `true` | write each flag as one line on stderr (the headless CLI prints the answer on stdout, diagnostics on stderr) |
+| `flagLog` | `true` | also write each flag as a warning through the harness logger |
 | `flagNotice` | `false` | also inject each flag as a notice after the turn closes (see *How flags reach you*) |
 | `asyncContradicted` | `notice` | async mode: a contradiction becomes a `notice`, a `followup` correction turn, or a plain `flag` |
 | `recordSkips` | `false` | also record skipped turns and the gate that skipped them |
@@ -107,8 +108,10 @@ the failure is logged and recorded.
 - **Session record** (default on): a `plugin:second-angle/verdict` record per audited turn, an ignorable plugin record
   that fork and resume carry and that readers without the plugin skip. It holds the status, the route, the latency,
   the scanner findings, and every claim with its label, reason, and quote.
-- **Process log** (default on): one warning line per flag, for example
-  `second angle: 1 claim not backed by this turn's reads: (1) "…" (OVERSTATED: …)`.
+- **stderr** (default on): one line per flag, for example
+  `second angle: 1 claim not backed by this turn's reads: (1) "…" (OVERSTATED: …) [turn 1]`. With
+  `dsh --profile headless` the answer goes to stdout and this line to stderr, right after it.
+- **Harness logger** (default on): the same line as a warning through `ctx.logger`, for hosts that export their logs.
 - **Notice** (`flagNotice: true`): the same line injected after the turn closes. It reaches the model with the next
   turn, and the Web chat shows its summary row then. It is not injected during the turn: an injected message at the
   stop boundary would force another step.
@@ -141,8 +144,8 @@ written as true but which did overstate its evidence.
   later by the audit time (2–3 seconds per audit in our integration runs with thinking off, bounded by
   `maxLatencyMs`), and it adds load to a shared server. Use `async`, a separate `auditorModel`, or a higher
   `minEvidenceChars` to trade coverage for latency.
-- **The stock Web chat does not render plugin records.** Flags live in the Session log and the process log, and with
-  `flagNotice` in the chat one turn later. A client renderer for the record is the obvious next step.
+- **The stock Web chat does not render plugin records.** Flags live in the Session log, on stderr, and in the harness
+  logger, and with `flagNotice` in the chat one turn later. A client renderer for the record is the obvious next step.
 - **Only this turn's reads count as evidence.** A claim the model knows from an earlier turn or from memory comes back
   UNSUPPORTED; it may well be true. Treat such flags as "not checked this turn".
 - **The card matters, and it is not magic.** The bench showed the auditor uses a fact on its card reliably; it did not

@@ -3,7 +3,7 @@
  * a real tool, real Sessions, and the real `agent/turn-stopping` dispatch drive the
  * plugin; only the two models (the turn's and the auditor's) are scripted.
  */
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
@@ -43,7 +43,7 @@ async function setup(main: ScriptEntry[], auditor: ScriptEntry[], config: Record
   const auditModel = new ScriptedAdapter(auditor, reasoning)
   ctx.llm.registerAdapter(['mock'], mainModel)
   ctx.llm.registerAdapter(['audit'], auditModel)
-  await ctx.plugin(SecondAngle, { auditorProvider: 'audit', auditorModel: 'auditor', ...config })
+  await ctx.plugin(SecondAngle, { auditorProvider: 'audit', auditorModel: 'auditor', flagStderr: false, ...config })
   const agent = await ctx.agentLoop.create(SessionId(`s-${String(contexts.length)}`), { provider: 'mock', model: 'main' })
   return { ctx, agent, mainModel, auditModel }
 }
@@ -246,6 +246,24 @@ describe('fails open', () => {
     const { agent } = await setup([toolReply('c1', 'read_facts', {}), textReply('Nobody has more than 3 entries.')], [textReply('')])
     await ask(agent, 'How many entries?')
     expect(verdicts(agent)[0]).toMatchObject({ status: 'no-verdict', source: 'scanner', delivered: ['log'] })
+  })
+})
+
+describe('stderr', () => {
+  it('writes each flag as one stderr line next to the answer, and records the channel', async () => {
+    const lines: string[] = []
+    const spy = vi.spyOn(process.stderr, 'write').mockImplementation((chunk: string | Uint8Array) => {
+      lines.push(String(chunk))
+      return true
+    })
+    try {
+      const { agent } = await setup([textReply('Nobody has ever measured this before.')], [], { flagStderr: true })
+      await ask(agent, 'Has anyone measured it?')
+      expect(verdicts(agent)[0]).toMatchObject({ status: 'flagged', delivered: ['stderr', 'log'] })
+    } finally {
+      spy.mockRestore()
+    }
+    expect(lines.filter(line => line.startsWith('second angle: 1 claim with no read in this turn'))).toHaveLength(1)
   })
 })
 

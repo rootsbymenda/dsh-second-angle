@@ -56,7 +56,7 @@ export interface VerdictRecord {
     readonly quote?: string
     readonly quoteFound: boolean
   }[]
-  /** The channels the result went out on: `steer`, `followup`, `log`, `notice`. */
+  /** The channels the result went out on: `steer`, `followup`, `stderr`, `log`, `notice`. */
   readonly delivered: readonly string[]
 }
 
@@ -68,6 +68,8 @@ export interface HarnessRuntime {
   readonly appendRecord: (session: Session, data: VerdictRecord) => void
   /** Monotonic milliseconds; `performance.now` in production. */
   readonly now: () => number
+  /** Write one diagnostic line; the process's stderr in production. */
+  readonly writeDiagnostic: (line: string) => void
 }
 
 /** A deferred notice waiting for its turn to close. */
@@ -202,6 +204,14 @@ export function createSecondAngle(runtime: HarnessRuntime): (ctx: Context, raw: 
     /** Deliver a flag line on the configured channels; returns the channels used. */
     const deliverFlag = (agent: Agent, turn: number, line: string, count: number, forceNotice = false): string[] => {
       const delivered: string[] = []
+      if (config.flagStderr) {
+        try {
+          runtime.writeDiagnostic(`${line} [turn ${String(turn)}]`)
+          delivered.push('stderr')
+        } catch (error: unknown) {
+          ctx.logger.warn(`second-angle: could not write the flag to stderr: ${describe(error)}`)
+        }
+      }
       if (config.flagLog) {
         ctx.logger.warn(`${line} [turn ${String(turn)}]`)
         delivered.push('log')

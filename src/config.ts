@@ -57,8 +57,10 @@ export interface Config {
   maxListedClaims?: number
   /** Write each verdict as a `plugin:second-angle/verdict` Session record. Default `true`. */
   flagRecord?: boolean
-  /** Write each flag as a warning in the process log. Default `true`. */
+  /** Write each flag as a warning through the harness logger. Default `true`. */
   flagLog?: boolean
+  /** Write each flag as one line on the process's stderr, where the headless CLI prints its diagnostics. Default `true`. */
+  flagStderr?: boolean
   /** Inject each flag as a notice once the turn has closed (model-visible with the next turn). Default `false`. */
   flagNotice?: boolean
   /** Async mode only: what a contradiction does once the turn has closed. Default `notice`. */
@@ -94,6 +96,7 @@ export interface ResolvedConfig {
   readonly maxListedClaims: number
   readonly flagRecord: boolean
   readonly flagLog: boolean
+  readonly flagStderr: boolean
   readonly flagNotice: boolean
   readonly asyncContradicted: 'notice' | 'followup' | 'flag'
   readonly recordSkips: boolean
@@ -124,6 +127,7 @@ export const DEFAULTS: ResolvedConfig = {
   maxListedClaims: 3,
   flagRecord: true,
   flagLog: true,
+  flagStderr: true,
   flagNotice: false,
   asyncContradicted: 'notice',
   recordSkips: false,
@@ -187,6 +191,7 @@ export function resolveConfig(config: Config = {}): ResolvedConfig {
     maxListedClaims: positiveInteger('maxListedClaims', config.maxListedClaims ?? DEFAULTS.maxListedClaims),
     flagRecord: config.flagRecord ?? DEFAULTS.flagRecord,
     flagLog: config.flagLog ?? DEFAULTS.flagLog,
+    flagStderr: config.flagStderr ?? DEFAULTS.flagStderr,
     flagNotice: config.flagNotice ?? DEFAULTS.flagNotice,
     asyncContradicted: oneOf('asyncContradicted', config.asyncContradicted ?? DEFAULTS.asyncContradicted, ['notice', 'followup', 'flag'] as const),
     recordSkips: config.recordSkips ?? DEFAULTS.recordSkips,
