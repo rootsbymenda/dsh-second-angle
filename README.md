@@ -6,14 +6,17 @@ evidence contradicts a claim, and flags claims the evidence does not back.
 
 ## Why
 
-On a private bench of our own sessions, a model auditor given one tool-using answer (three known errors, three true
-claims) plus that turn's own tool output, with thinking off and a short facts-and-limits card, flagged all three
-errors in 5 of 5 runs with different sampling seeds (and, each time, one true claim the turn had not read), named the
-right reason for the hardest one in 5 of 5, and took about 16 seconds a check; with short thinking on and the same
-card it was about 9–11 times slower there and no more accurate. A no-model scan for absolute words caught only the two
-errors that used one, and on answers written without any tool read an evidence-only auditor flagged every claim, true
-or false. So the plugin feeds the auditor the turn's own reads, keeps thinking off, never sends a turn without reads
-to the model, and puts the free scan in front.
+We tested the method on a private bench of our own sessions. The bench held one answer that used tools, with three
+known errors and three true claims. The auditor saw it together with that turn's own tool output. With thinking off
+and a short facts-and-limits card, it flagged all three errors in 5 of 5 runs (five sampling seeds at temperature
+0.7). Each run also flagged one true claim that the turn had not read. It named the right reason for the hardest
+error in 5 of 5. A check took about 16 seconds. With short thinking on and the same card, it was about 9–11 times
+slower and no more accurate.
+
+A scan for absolute words, with no model, caught only the two errors that used one. On answers written without any
+tool read, an auditor that sees only evidence flagged every claim, true or false. So the plugin feeds the auditor
+the turn's own reads, keeps thinking off, puts the free scan in front, and never sends a turn without reads to the
+model.
 
 ## Install
 
