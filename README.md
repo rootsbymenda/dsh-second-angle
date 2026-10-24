@@ -6,13 +6,14 @@ evidence contradicts a claim, and flags claims the evidence does not back.
 
 ## Why
 
-On a private bench of our own sessions, a model auditor given the answer plus the tool output of its own turn, with
-thinking off and a short facts-and-limits card, flagged all three known errors in a tool-using answer on 5 of 5 seeds
-(and, each time, one true claim the turn had not read), named the right reason for the hardest one on 5 of 5, and
-needed about 16 seconds a check; with thinking on and the same card it was 7–11 times slower there and no more
-accurate. A no-model scan for absolute words caught only the two errors that used one, and on answers written without
-any tool read an evidence-only auditor flagged every claim, true or false. So the plugin feeds the auditor the turn's own
-reads, keeps thinking off, never sends a turn without reads to the model, and puts the free scan in front.
+On a private bench of our own sessions, a model auditor given one tool-using answer (three known errors, three true
+claims) plus that turn's own tool output, with thinking off and a short facts-and-limits card, flagged all three
+errors in 5 of 5 runs with different sampling seeds (and, each time, one true claim the turn had not read), named the
+right reason for the hardest one in 5 of 5, and took about 16 seconds a check; with short thinking on and the same
+card it was 7–11 times slower there and no more accurate. A no-model scan for absolute words caught only the two
+errors that used one, and on answers written without any tool read an evidence-only auditor flagged every claim, true
+or false. So the plugin feeds the auditor the turn's own reads, keeps thinking off, never sends a turn without reads
+to the model, and puts the free scan in front.
 
 ## Install
 
@@ -26,7 +27,8 @@ dsh plugin --profile <profile> add ./dsh-second-angle-0.1.0.tgz
 dsh plugin --profile <profile> add github:rootsbymenda/dsh-second-angle#<commit>
 ```
 
-A git install builds the plugin with its `prepare` script, and pnpm runs that only after you allow it: the first
+A git install builds the plugin with its `prepare` script (`tsc -p tsconfig.build.json`, which writes `lib/`), and
+pnpm runs that only after you allow it: the first
 `add` stops with `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED` and prints the exact key to add under `allowBuilds` in the
 profile's `pnpm-workspace.yaml` (for a git install the key is `dsh-second-angle@<the spec you gave>`); add it and run
 the `add` again (see the harness guide *Package and install a plugin*). Check the result with
@@ -63,7 +65,7 @@ the row's whole `config`):
 | `auditorMaxTokens` | `2048` | hard output cap of the auditor call |
 | `auditorTemperature` | `0` | auditor sampling temperature |
 | `maxEvidenceChars` | `48000` | longer tool output is shortened (head and tail kept, marked) |
-| `card` | 8 general lines | facts-and-limits card; replaces the default |
+| `card` | 8 general lines (`DEFAULT_CARD` in `src/prompt.ts`) | facts-and-limits card; replaces the default |
 | `cardFile` | — | file whose lines are appended to the card, read at load |
 | `steer` | `true` | let a contradiction steer a correction |
 | `requireQuoteForSteer` | `true` | steer only when the cited evidence text is found in the tool output |
@@ -120,6 +122,18 @@ continues unchanged and the failure is logged and recorded.
   turn, and the harness chat code renders it then as a notice row (not checked in a browser). It is not injected
   during the turn: an injected message at the stop boundary would force another step.
 
+## Tested in a real harness
+
+Six headless runs on our own DeepSeek Harness 0.2.1-rc.2 instance, with the plugin installed from its tarball the way
+a user would and the local model behind the harness's own provider route. The first exposed a gate bug: a short tool
+output and a wrong version string slipped past the scanner, so the turn was skipped (fixed; the scanner now reads
+version strings and dates). After the fix, a planted contradiction (the answer gives a version the file it just read
+does not) was steered and corrected in the same turn, twice with identical results; a hedged answer about a partial
+read passed as clean; a planted overstatement about the same partial read was flagged on stderr right after the
+answer; an answer written without any tool and carrying an absolute word got a scanner flag with no model call. Every
+run left its `plugin:second-angle/verdict` record in the persisted Session log. A git install over a pinned commit
+went through the `allowBuilds` step described above.
+
 ## Public eval
 
 See [`eval/`](eval/README.md): 24 cases built from verbatim excerpts of the harness's own documentation (8
@@ -128,13 +142,15 @@ auditor path. Results and every failure: [`eval/EVAL_RESULTS.md`](eval/EVAL_RESU
 
 With thinking off (the default), on DeepSeek V4.1 Flash served locally:
 
-| contradicted: steered | contradicted: acted on | unsupported or overstated: flagged | clean: false flags | no verdict | median per audit |
+| contradicted: steered | contradicted: acted on (steered or flagged) | unsupported or overstated: flagged | clean: false flags | no verdict | median per audit |
 |---|---|---|---|---|---|
 | 7/8 | 8/8 | 8/8 | 0/8 | 0/24 | 3.6 s |
 
 The one contradiction that was not steered (C7) came back OVERSTATED, with the right reason, and was flagged. The set
-is small and written by us, and the default card speaks to three of its cases; the results file says what the
-numbers do and do not show.
+is small and written by us, and the default card speaks to three of its cases; its cases are also short (one to three
+claims against an excerpt of at most about 2,200 characters), which is why an audit takes seconds here. The eval runs
+the plugin's auditor path directly, not through a harness turn; the runs above cover that. The results file says
+what the numbers do and do not show.
 
 With `auditorReasoningEffort: low` (short thinking) the same set gave 8/8 steered, 8/8 flagged, 0/8 false flags,
 and no missing verdicts, at a median of 5.85 s per audit (1.6 times longer). It also steered once on a sentence we had
@@ -143,7 +159,7 @@ written as true but which did overstate its evidence.
 ## Limits
 
 - **The answer has already streamed.** By the time `agent/turn-stopping` fires, the user has seen the text. A steer
-  produces a visible revision in the same turn; a flag cannot unsay anything.
+  produces a visible revision in the same turn; a flag cannot unsay anything. Set `steer: false` for flags only.
 - **It shares the model.** By default the auditor is one more call to the same model: in `sync` mode the turn closes
   later by the audit time (2–3 seconds per audit in our integration runs with thinking off, bounded by
   `maxLatencyMs`), and it adds load to a shared server. Use `async` (no wait, but no steer), a separate
