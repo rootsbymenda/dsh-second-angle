@@ -131,8 +131,8 @@ function readCardFile(path: string | undefined): string[] {
 export function createSecondAngle(runtime: HarnessRuntime): (ctx: Context, raw: Config | undefined) => void {
   return function apply(ctx: Context, raw: Config | undefined): void {
     const config: ResolvedConfig = resolveConfig(raw ?? {})
-    if (!config.enabled) {
-      ctx.logger.info('second-angle: disabled by configuration')
+    if (!config.enabled || !config.claimsEnabled) {
+      ctx.logger.info(config.enabled ? 'second-angle: claim auditing disabled by configuration' : 'second-angle: disabled by configuration')
       return
     }
     const card = [...config.card, ...readCardFile(config.cardFile)]

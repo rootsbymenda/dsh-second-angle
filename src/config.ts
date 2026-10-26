@@ -6,11 +6,20 @@
 
 import { DEFAULT_ABSOLUTE_WORDS } from './scanner.ts'
 import { DEFAULT_CARD } from './prompt.ts'
+import { normalizeAllowedHosts } from './actions.ts'
 
 /** Plugin configuration as written in `cordis.yml`; every field is optional. */
 export interface Config {
   /** Master switch; `false` registers no listener. Default `true`. */
   enabled?: boolean
+  /** Existing claim-auditor path; false leaves only the free ACTIONS check. Default true. */
+  claimsEnabled?: boolean
+  /** Free action patterns: report by default; optionally deny RED calls before execution. */
+  actionsMode?: 'flag' | 'block' | 'off'
+  /** Exact remote hostnames/IPs or *.example.org subdomains; loopback is built in. */
+  actionsAllowedHosts?: string[]
+  /** Declare an always-call policy when the deployment does not expose it in system events. */
+  actionsToolRequirement?: 'auto' | 'required'
   /**
    * `sync` waits for the verdict before the turn closes, bounded by `maxLatencyMs`, so a
    * contradiction can steer a correction in the same turn. `async` lets the turn close at once
@@ -19,7 +28,7 @@ export interface Config {
   mode?: 'sync' | 'async'
   /** Milliseconds one audit may take; past it the audit is abandoned and the turn goes on. Default 45000. */
   maxLatencyMs?: number
-  /** Also audit turns of sub-agent sessions. Default `false`. */
+  /** Also publish turn-end audits of sub-agent sessions; block-mode guards always cover every agent. Default `false`. */
   includeSubagents?: boolean
   /**
    * A turn that ran no tool has no evidence to audit against, and a model auditor flags every
@@ -55,13 +64,13 @@ export interface Config {
   requireQuoteForSteer?: boolean
   /** Most claims listed in one steering message or flag line. Default 3. */
   maxListedClaims?: number
-  /** Write each verdict as a `plugin:second-angle/verdict` Session record. Default `true`. */
+  /** Write claim verdicts and ACTIONS findings as distinct Session records. Default `true`. */
   flagRecord?: boolean
   /** Write each flag as a warning through the harness logger. Default `true`. */
   flagLog?: boolean
   /** Write each flag as one line on the process's stderr, where the headless CLI prints its diagnostics. Default `true`. */
   flagStderr?: boolean
-  /** Inject each flag as a notice once the turn has closed (model-visible with the next turn). Default `false`. */
+  /** Inject claim flags and RED ACTIONS findings as notices once the turn has closed (model-visible with the next turn). Default `false`. */
   flagNotice?: boolean
   /** Async mode only: what a contradiction does once the turn has closed. Default `notice`. */
   asyncContradicted?: 'notice' | 'followup' | 'flag'
@@ -76,6 +85,10 @@ export interface Config {
 /** The fully resolved configuration the plugin runs with. */
 export interface ResolvedConfig {
   readonly enabled: boolean
+  readonly claimsEnabled: boolean
+  readonly actionsMode: 'flag' | 'block' | 'off'
+  readonly actionsAllowedHosts: readonly string[]
+  readonly actionsToolRequirement: 'auto' | 'required'
   readonly mode: 'sync' | 'async'
   readonly maxLatencyMs: number
   readonly includeSubagents: boolean
@@ -107,6 +120,10 @@ export interface ResolvedConfig {
 /** The defaults, in one place. */
 export const DEFAULTS: ResolvedConfig = {
   enabled: true,
+  claimsEnabled: true,
+  actionsMode: 'flag',
+  actionsAllowedHosts: [],
+  actionsToolRequirement: 'auto',
   mode: 'sync',
   maxLatencyMs: 45_000,
   includeSubagents: false,
@@ -171,6 +188,10 @@ export function resolveConfig(config: Config = {}): ResolvedConfig {
   }
   return {
     enabled: config.enabled ?? DEFAULTS.enabled,
+    claimsEnabled: config.claimsEnabled ?? DEFAULTS.claimsEnabled,
+    actionsMode: oneOf('actionsMode', config.actionsMode ?? DEFAULTS.actionsMode, ['flag', 'block', 'off'] as const),
+    actionsAllowedHosts: normalizeAllowedHosts(config.actionsAllowedHosts ?? DEFAULTS.actionsAllowedHosts),
+    actionsToolRequirement: oneOf('actionsToolRequirement', config.actionsToolRequirement ?? DEFAULTS.actionsToolRequirement, ['auto', 'required'] as const),
     mode: oneOf('mode', config.mode ?? DEFAULTS.mode, ['sync', 'async'] as const),
     maxLatencyMs: positiveInteger('maxLatencyMs', config.maxLatencyMs ?? DEFAULTS.maxLatencyMs),
     includeSubagents: config.includeSubagents ?? DEFAULTS.includeSubagents,

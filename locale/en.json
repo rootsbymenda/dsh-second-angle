@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Second Angle",
-    "description": "Checks a finished answer against the tool output its turn read: steers a correction on a contradiction, flags claims the reads do not back."
+    "description": "Checks finished-turn claims against tool evidence and scans requested actions for network, credential, persistence and destructive patterns; reports by default with optional pre-call blocking."
   }
 }

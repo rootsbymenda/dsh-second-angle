@@ -11,12 +11,14 @@
  */
 
 import z from '@deepseek-ai/schemastery'
+import type { Context } from '@deepseek-ai/cordis'
 import type { ContextFormed } from '@deepseek-ai/dsh-llm'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { appendPluginRecord } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-agent'
-import { DEFAULTS, type Config as SecondAngleConfig } from './config.ts'
+import { DEFAULTS, resolveConfig, type Config as SecondAngleConfig } from './config.ts'
 import { createSecondAngle, RECORD_TYPE, type VerdictRecord } from './plugin.ts'
+import { ACTIONS_RECORD_TYPE, applyActions, type ActionsRecord } from './actions-plugin.ts'
 
 declare module '@deepseek-ai/dsh-llm' {
   interface MessageSourceMap {
@@ -29,6 +31,8 @@ declare module '@deepseek-ai/dsh-session/types' {
   interface PluginRecordMap {
     /** One second-angle verdict for one turn. */
     'plugin:second-angle/verdict': VerdictRecord
+    /** Deterministic action findings, separate from the model's claim verdict. */
+    'plugin:second-angle/actions': ActionsRecord
   }
 }
 
@@ -37,6 +41,9 @@ export type { ResolvedConfig } from './config.ts'
 /** Plugin configuration as written in `cordis.yml`; every field is optional (see `config.ts` for each field). */
 export type Config = SecondAngleConfig
 export type { VerdictRecord } from './plugin.ts'
+export type { ActionsRecord } from './actions-plugin.ts'
+export { scanActions, actionFlagText } from './actions.ts'
+export type { ActionCall, ActionFinding, ActionRule, ActionStatement, ActionTurn } from './actions.ts'
 export { DEFAULT_CARD, AUDITOR_METHOD, buildAuditorPrompt } from './prompt.ts'
 export { DEFAULT_ABSOLUTE_WORDS, scanAnswer } from './scanner.ts'
 export { parseVerdict } from './verdict.ts'
@@ -46,11 +53,15 @@ export { routeVerdicts } from './route.ts'
 export const name = 'second-angle'
 
 /** The auditor calls the model through `ctx.llm`. */
-export const inject = ['llm']
+export const inject = ['llm', 'tools']
 
 /** Schemastery validation for {@link Config}; `resolveConfig` applies the same defaults and range checks. */
 export const Config: z<Config> = z.object({
   enabled: z.boolean().default(DEFAULTS.enabled),
+  claimsEnabled: z.boolean().default(DEFAULTS.claimsEnabled),
+  actionsMode: z.union(['flag', 'block', 'off']).default(DEFAULTS.actionsMode),
+  actionsAllowedHosts: z.array(z.string()).default([...DEFAULTS.actionsAllowedHosts]),
+  actionsToolRequirement: z.union(['auto', 'required']).default(DEFAULTS.actionsToolRequirement),
   mode: z.union(['sync', 'async']).default(DEFAULTS.mode),
   maxLatencyMs: z.number().default(DEFAULTS.maxLatencyMs),
   includeSubagents: z.boolean().default(DEFAULTS.includeSubagents),
@@ -80,9 +91,20 @@ export const Config: z<Config> = z.object({
 })
 
 /** Mount the plugin: fold turns, audit at the stop boundary, route by severity. */
-export const apply = createSecondAngle({
+const applyClaims = createSecondAngle({
   createUserMessage: input => createUserMessage({ content: [...input.content], source: input.source }),
   appendRecord: (session, data) => { appendPluginRecord(session, RECORD_TYPE, data) },
   now: () => performance.now(),
   writeDiagnostic: (line) => { process.stderr.write(`${line}\n`) },
 })
+
+/** Mount the original auditor and independent deterministic ACTIONS hooks. */
+export function apply(ctx: Context, raw: Config = {}): void {
+  const config = resolveConfig(raw)
+  applyActions(ctx, config, {
+    createUserMessage: input => createUserMessage({ content: [...input.content], source: input.source }),
+    appendRecord: (session, data) => { appendPluginRecord(session, ACTIONS_RECORD_TYPE, data) },
+    writeDiagnostic: (line) => { process.stderr.write(`${line}\n`) },
+  })
+  applyClaims(ctx, raw)
+}
