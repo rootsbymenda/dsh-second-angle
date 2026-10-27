@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 — 2026-10-28
+
+- Block mode now denies a tool call whose shell command is nested beyond the parser's inspection
+  limit. Before, such a call returned no commands and was accepted without a full inspection.
+- Pin Zod to 4.6.7 across the harness dependencies. The 4.4.3 resolution carried a published
+  memory-exhaustion advisory for oversized constrained collections.
+
 ## 0.2.0 — 2026-10-27
 
 - Add a free ACTIONS scan of live turn events: SAID-VS-DID, NETWORK, SECRETS-READ, PACK-AND-SEND,

@@ -115,7 +115,7 @@ function operands(args: readonly string[], redirections: readonly number[]): str
 }
 
 function parseShell(source: string, depth: number): ParsedShell {
-  if (depth > 4) return { commands: [] }
+  if (depth > 4) throw new Error('shell nesting exceeds inspection limit')
   interface HereDocument { delimiter: string; quoted: boolean; stripTabs: boolean; body: string }
   const segments: { words: string[]; redirections: number[]; order: number; pipeline: number; documents: HereDocument[]; variables: { name: string; operator: string }[] }[] = []
   const pendingDocuments: HereDocument[] = []

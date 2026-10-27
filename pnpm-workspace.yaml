@@ -1,3 +1,6 @@
 # koffi arrives through a test-only dependency; the tests do not need its native build.
 allowBuilds:
   koffi: false
+
+overrides:
+  zod: 4.6.7

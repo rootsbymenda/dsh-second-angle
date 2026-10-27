@@ -32,8 +32,8 @@ layers and the plugin only. If you run the harness through `npx @deepseek-ai/dsh
 
 ```sh
 # from the release tarball (prebuilt, no build)
-curl -LO https://github.com/rootsbymenda/dsh-second-angle/releases/download/v0.2.0/dsh-second-angle-0.2.0.tgz
-dsh plugin --profile headless add ./dsh-second-angle-0.2.0.tgz
+curl -LO https://github.com/rootsbymenda/dsh-second-angle/releases/download/v0.2.1/dsh-second-angle-0.2.1.tgz
+dsh plugin --profile headless add ./dsh-second-angle-0.2.1.tgz
 
 # or from GitHub, pinned to a commit
 dsh plugin --profile headless add github:rootsbymenda/dsh-second-angle#<commit>

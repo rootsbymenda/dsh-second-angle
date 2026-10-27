@@ -85,7 +85,7 @@ describe('bounded scan and diagnostic work', () => {
   it.each([2_000, 8_000, 32_000])('bounds incomplete and nested substitutions at %i repetitions', count => {
     const start = performance.now()
     expect(scan('echo ' + '$('.repeat(count))).toEqual([])
-    expect(scan('echo ' + '$(echo '.repeat(count) + ')'.repeat(count))).toEqual([])
+    expect(() => scan('echo ' + '$(echo '.repeat(count) + ')'.repeat(count))).toThrow('shell nesting exceeds inspection limit')
     expect(performance.now() - start).toBeLessThan(1_000)
   })
   it.each([5_000, 20_000, 80_000])('bounds redaction and destination scanning for %i bytes', count => {

@@ -8,6 +8,7 @@ import { createUserMessage, ToolCallId, type StreamChunk } from '@deepseek-ai/ds
 import { pluginRecordOf, SessionId } from '@deepseek-ai/dsh-session'
 import { defineContentToolFixture } from '@deepseek-ai/dsh-tools'
 import * as SecondAngle from '../src/index.ts'
+import * as Shell from '../src/actions-shell.ts'
 import type { ActionsRecord } from '../src/actions-plugin.ts'
 import { ScriptedAdapter, textReply, toolReply, type ScriptEntry } from './helpers/scripted-adapter.ts'
 import { measuredCases } from './fixtures/actions-measured.ts'
@@ -160,6 +161,12 @@ describe('ACTIONS full-loop delivery and opt-in denial', () => {
       expect(bodies).toHaveLength(1)
       expect(records(agent)).toEqual([])
     }
+  })
+  it('denies a call when shell inspection reports its resource limit', async () => {
+    vi.spyOn(Shell, 'shellCommands').mockImplementation(() => { throw new Error('shell nesting exceeds inspection limit') })
+    const { agent, bodies } = await setup([toolReply('c1', 'bash', { command: 'echo drawing' }), textReply('Done.')], { actionsMode: 'block' })
+    await ask(agent)
+    expect(bodies).toHaveLength(0)
   })
   it('a later pre-execute allow listener cannot override the monotonic denial', async () => {
     const { ctx, agent, bodies } = await setup([toolReply('c1', 'bash', { command: 'rm -rf /' }), textReply('Done.')], { actionsMode: 'block' })
